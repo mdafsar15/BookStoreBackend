@@ -8,6 +8,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
+import org.slf4j.Logger;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -39,6 +40,7 @@ import com.bridgelabz.bookstore.repo.ImageRepository;
 import com.bridgelabz.bookstore.repo.RoleRepository;
 import com.bridgelabz.bookstore.repo.UserRepo;
 import com.bridgelabz.bookstore.utils.DateUtility;
+import com.bridgelabz.bookstore.utils.EmailSenderService;
 import com.bridgelabz.bookstore.utils.ImageUtil;
 import com.bridgelabz.bookstore.utils.JwtValidate;
 import com.bridgelabz.bookstore.utils.MailTempletService;
@@ -59,28 +61,18 @@ public class UserServiceImp implements UserService {
 	@Autowired
 	private WebSecurityConfig encrypt;
 
-//	@Autowired
-//	private RedisCache<Object> redis;
-
 	@Autowired
 	private Environment environment;
-//
-//	@Autowired
-//	private AmazonS3 amazonS3;
-
-//	@Value("${amazonProperties.bucketName}")
-//	private String bucketName;
-//
-//	@Value("${amazonProperties.bookBucketName}")
-//	private String bookBucketName;
-//
-//	@Value("${redis.redisKey}")
-//	private String redisKey;
 
 	@Autowired
 	ImageRepository imageRepository;
 
-	public boolean registerUser(RegistrationDTO userDetails) throws UserException {
+	@Autowired
+	EmailSenderService emailSenderService;
+
+	private static final String VERIFICATION_URL = "http://localhost:8080/users/verify/";
+
+	public boolean registerUser(RegistrationDTO userDetails) throws Exception {
 		Role role = roleRepository.getRoleById(Integer.parseInt(userDetails.getRole()));
 		Optional<User> userEmailExists = Optional.ofNullable(userRepository.getusersByemail(userDetails.getEmail()));
 		if (userEmailExists.isPresent()) {
@@ -104,16 +96,22 @@ public class UserServiceImp implements UserService {
 			userEntity.setRoleList(roles);
 			userRepository.addUser(userEntity);
 
-			registerMail(userEntity, role, environment.getProperty("registration-template-path"));
+//			registerMail(userEntity, role, environment.getProperty("registration-template-path"));
+
+			String response = VERIFICATION_URL
+					+ JwtValidate.createJWT(userEntity.getId(), role.getRoleId(), Constant.REGISTER_EXP);
+
+			emailSenderService.sendEmail(userDetails.getEmail(), "Registration Link...",
+					"Link For Verification: " + response);
 			return true;
 		}
 
 	}
 
-	private void registerMail(User user, Role role, String templet) {
-		String token = TokenUtility.verifyResponse(user.getId(), role.getRoleId());
-		sendMail(user, token, templet);
-	}
+//	private void registerMail(User user, Role role, String templet) {
+//		String token = TokenUtility.verifyResponse(user.getId(), role.getRoleId());
+//		sendMail(user, token, templet);
+//	}
 
 	private void resetPasswordMail(User user, Role role, String templet) {
 		String token = TokenUtility.resetPassword(user.getId(), role.getRoleId());
@@ -122,7 +120,8 @@ public class UserServiceImp implements UserService {
 
 	private void sendMail(User user, String token, String templet) {
 		try {
-			mailTempletService.getTemplate(user, token, templet);
+//			mailTempletService.getTemplate(user, token, templet);
+			emailSenderService.sendEmail(user.getEmail(), token, templet);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -140,7 +139,7 @@ public class UserServiceImp implements UserService {
 			if (!mayBeUser.isVerify()) {
 				mayBeUser.setVerify(true);
 				userRepository.verify(mayBeUser.getId());
-				registerMail(mayBeUser, role, environment.getProperty("login-template-path"));
+//				registerMail(mayBeUser, role, environment.getProperty("login-template-path"));
 				return true;
 			}
 			throw new UserException(Constant.USER_ALREADY_VERIFIED_MESSAGE, Constant.ALREADY_EXIST_EXCEPTION_STATUS);

@@ -50,8 +50,7 @@ public class UserController {
 	private UserRepo userRepository;
 
 	@PostMapping(value = "/register", headers = "Accept=application/json")
-	public ResponseEntity<Response> register(@RequestBody @Valid RegistrationDTO request)
-			throws IOException, UserException {
+	public ResponseEntity<Response> register(@RequestBody @Valid RegistrationDTO request) throws Exception {
 		if (userService.registerUser(request)) {
 			return ResponseEntity.status(HttpStatus.OK)
 					.body(new Response(Constant.USER_REGISTER_SUCESSFULLY, Constant.OK_RESPONSE_CODE));
@@ -61,8 +60,8 @@ public class UserController {
 		}
 	}
 
-	@GetMapping(value = "/verify", produces = MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<Response> userVerification(@RequestParam("token") String token) throws UserException {
+	@GetMapping(value = "/verify/{token}", produces = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<Response> userVerification(@PathVariable("token") String token) throws UserException {
 		if (userService.verify(token)) {
 			return ResponseEntity.status(HttpStatus.OK)
 					.body(new Response(Constant.USER_VERIFIED_SUCCESSFULLY_MEAASGE, Constant.OK_RESPONSE_CODE));
@@ -97,7 +96,7 @@ public class UserController {
 
 	@PutMapping("/resetpassword")
 	public ResponseEntity<Response> resetPassword(@Valid @RequestBody ResetPasswordDto resetPassword,
-			@RequestParam("token") String token) throws UserException {
+			@RequestParam("token") String token) throws Exception {
 		System.out.println("Hitting api  reset password");
 		if (userService.resetPassword(resetPassword, token)) {
 			return ResponseEntity.status(HttpStatus.OK).body(

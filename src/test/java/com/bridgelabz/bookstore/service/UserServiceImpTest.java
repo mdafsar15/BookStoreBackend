@@ -106,7 +106,7 @@ class UserServiceImpTest {
 		}
 	}	
 	@Test
-	void RegisterUserTest() throws UserException {
+	void RegisterUserTest() throws Exception {
 		UserServiceImp Urepo= mock(UserServiceImp.class);
 	    ArgumentCaptor<RegistrationDTO> argumentCaptor = ArgumentCaptor.forClass(RegistrationDTO.class); 
 	    RegistrationDTO reg= (new RegistrationDTO("Pallavi Kumari","S_1tringa","pallavikumari2207@gmail.com","A_1tring","2", "9122449097"));

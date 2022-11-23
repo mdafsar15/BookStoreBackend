@@ -71,8 +71,10 @@ public class SellerServiceImpl implements SellerService {
 		BeanUtils.copyProperties(newBook, book);
 		book.setCreatedDateAndTime(DateUtility.today());
 		book.setSeller(seller);
+		book.setApprovalSent(true);
+		book.setApproved(true);
 		bookRepository.save(book);
-		addBookInElasticsearch(book);
+//		addBookInElasticsearch(book);
 		return book;
 	}
 
@@ -96,7 +98,7 @@ public class SellerServiceImpl implements SellerService {
 		bookToBeUpdated.setLastUpdatedDateAndTime(DateUtility.today());
 		bookRepository.save(bookToBeUpdated);
 
-		updateBookInElasticSearch(bookToBeUpdated);
+//		updateBookInElasticSearch(bookToBeUpdated);
 
 		return bookToBeUpdated;
 	}
@@ -108,9 +110,9 @@ public class SellerServiceImpl implements SellerService {
 	 * @return List<Book>
 	 */
 	@Override
-	public List<Book> getAllBooks(String token,Integer pageNo) {
+	public List<Book> getAllBooks(String token, Integer pageNo) {
 		User seller = tokenUtility.authentication(token, Constant.ROLE_AS_SELLER);
-		return bookRepository.findBySellerId(seller.getId(),pageNo);
+		return bookRepository.findBySellerId(seller.getId(), pageNo);
 	}
 
 	/**
@@ -127,7 +129,7 @@ public class SellerServiceImpl implements SellerService {
 				.orElseThrow(() -> new BookNotFoundException(Constant.BOOK_NOT_FOUND));
 //		seller.getSellerBooks().remove(bookTobeDeleted);
 		bookRepository.deleteBook(bookTobeDeleted);
-		deleteBookInElaticSearch(bookId);
+//		deleteBookInElaticSearch(bookId);
 		return true;
 	}
 
@@ -167,7 +169,7 @@ public class SellerServiceImpl implements SellerService {
 				.orElseThrow(() -> new BookNotFoundException(Constant.BOOK_NOT_FOUND));
 		if (!bookSentForApproval.isApproved() && !bookSentForApproval.isApprovalSent()) {
 			bookSentForApproval.setApprovalSent(true);
-			updateBookInElasticSearch(bookSentForApproval);
+//			updateBookInElasticSearch(bookSentForApproval);
 			return true;
 		}
 		return false;
@@ -178,38 +180,38 @@ public class SellerServiceImpl implements SellerService {
 		User seller = tokenUtility.authentication(token, Constant.ROLE_AS_SELLER);
 		return bookRepository.findBookCount(seller.getId());
 	}
-	
-	@SuppressWarnings("unchecked")
-	private void addBookInElasticsearch(Book book) {
-		Map<String, Object> documentMapper = objectMapper.convertValue(book, Map.class);
-		IndexRequest indexRequest = new IndexRequest(Constant.INDEX, Constant.TYPE, String.valueOf(book.getBookId()))
-				.source(documentMapper);
-		try {
-			client.index(indexRequest, RequestOptions.DEFAULT);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
 
-	@SuppressWarnings("unchecked")
-	private void updateBookInElasticSearch(Book bookToBeUpdated) {
-		Map<String, Object> bookMapper = objectMapper.convertValue(bookToBeUpdated, Map.class);
-		UpdateRequest updateRequest = new UpdateRequest(Constant.INDEX, Constant.TYPE,
-				String.valueOf(bookToBeUpdated.getBookId())).doc(bookMapper);
-		try {
-			client.update(updateRequest, RequestOptions.DEFAULT);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
+//	@SuppressWarnings("unchecked")
+//	private void addBookInElasticsearch(Book book) {
+//		Map<String, Object> documentMapper = objectMapper.convertValue(book, Map.class);
+//		IndexRequest indexRequest = new IndexRequest(Constant.INDEX, Constant.TYPE, String.valueOf(book.getBookId()))
+//				.source(documentMapper);
+//		try {
+//			client.index(indexRequest, RequestOptions.DEFAULT);
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
+//	}
 
-	private void deleteBookInElaticSearch(long bookId) {
-		DeleteRequest deleteRequest = new DeleteRequest(Constant.INDEX, Constant.TYPE, String.valueOf(bookId));
-		try {
-			client.delete(deleteRequest, RequestOptions.DEFAULT);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
+//	@SuppressWarnings("unchecked")
+//	private void updateBookInElasticSearch(Book bookToBeUpdated) {
+//		Map<String, Object> bookMapper = objectMapper.convertValue(bookToBeUpdated, Map.class);
+//		UpdateRequest updateRequest = new UpdateRequest(Constant.INDEX, Constant.TYPE,
+//				String.valueOf(bookToBeUpdated.getBookId())).doc(bookMapper);
+//		try {
+//			client.update(updateRequest, RequestOptions.DEFAULT);
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
+//	}
+//
+//	private void deleteBookInElaticSearch(long bookId) {
+//		DeleteRequest deleteRequest = new DeleteRequest(Constant.INDEX, Constant.TYPE, String.valueOf(bookId));
+//		try {
+//			client.delete(deleteRequest, RequestOptions.DEFAULT);
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
+//	}
 
 }

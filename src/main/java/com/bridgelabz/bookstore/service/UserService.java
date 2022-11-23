@@ -19,9 +19,9 @@ public interface UserService {
 
 	public boolean forgetPassword(String email) throws UserException;
 
-	public boolean resetPassword(ResetPasswordDto resetPassword, String token) throws UserException;
+	public boolean resetPassword(ResetPasswordDto resetPassword, String token) throws Exception;
 
-	public boolean registerUser(RegistrationDTO user) throws IOException, UserException;
+	public boolean registerUser(RegistrationDTO user) throws IOException, UserException, Exception;
 
 	public boolean logOut(String token) throws UserException;
 
